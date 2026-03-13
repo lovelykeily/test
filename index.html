@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>언팔 감지기</title>
+<link href="https://fonts.googleapis.com/css2?family=Gmarket+Sans:wght@300;500;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c27;
+    --border: #2a2a3d;
+    --accent: #ff385c;
+    --accent2: #ff6b35;
+    --text: #f0f0f8;
+    --text-muted: #7070a0;
+    --green: #00e5a0;
+    --radius: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background effects */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px; left: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(255,56,92,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -200px; right: -200px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(255,107,53,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 60px 24px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+  .logo {
+    font-family: 'Gmarket Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .logo::before, .logo::after {
+    content: '';
+    width: 32px;
+    height: 1px;
+    background: var(--accent);
+    opacity: 0.5;
+  }
+  h1 {
+    font-family: 'Gmarket Sans', sans-serif;
+    font-size: clamp(32px, 7vw, 52px);
+    font-weight: 700;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+  .subtitle {
+    font-size: 15px;
+    color: var(--text-muted);
+    font-weight: 300;
+    line-height: 1.6;
+  }
+
+  /* Upload Zone */
+  .upload-section {
+    margin-bottom: 32px;
+  }
+
+  .upload-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .upload-box {
+    background: var(--surface);
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 28px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .upload-box:hover {
+    border-color: var(--accent);
+    background: rgba(255,56,92,0.04);
+    transform: translateY(-2px);
+  }
+  .upload-box.done {
+    border-style: solid;
+    border-color: var(--green);
+    background: rgba(0,229,160,0.04);
+  }
+  .upload-box.done .upload-icon { color: var(--green); }
+  .upload-box.done .upload-label { color: var(--green); }
+
+  .upload-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+    display: block;
+    transition: transform 0.2s;
+  }
+  .upload-box:hover .upload-icon { transform: scale(1.1); }
+
+  .upload-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .upload-hint {
+    font-size: 11px;
+    color: var(--border);
+  }
+  .upload-filename {
+    font-size: 11px;
+    color: var(--green);
+    margin-top: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  input[type=file] { display: none; }
+
+  .analyze-btn {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    font-family: 'Gmarket Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 0.05em;
+    box-shadow: 0 8px 32px rgba(255,56,92,0.3);
+  }
+  .analyze-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(255,56,92,0.4);
+  }
+  .analyze-btn:active { transform: translateY(0); }
+  .analyze-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* Guide */
+  .guide {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 32px;
+  }
+  .guide-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .guide-steps {
+    list-style: none;
+    counter-reset: steps;
+  }
+  .guide-steps li {
+    counter-increment: steps;
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 4px 0 4px 28px;
+    position: relative;
+    line-height: 1.5;
+  }
+  .guide-steps li::before {
+    content: counter(steps);
+    position: absolute;
+    left: 0;
+    width: 18px; height: 18px;
+    background: var(--border);
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    top: 5px;
+  }
+  .guide-steps li b { color: var(--text); font-weight: 500; }
+
+  /* Stats */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+    animation: fadeUp 0.4s ease;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    text-align: center;
+  }
+  .stat-card.highlight {
+    border-color: rgba(255,56,92,0.4);
+    background: rgba(255,56,92,0.05);
+  }
+  .stat-num {
+    font-family: 'Gmarket Sans', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .stat-card.highlight .stat-num { color: var(--accent); }
+  .stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* Results */
+  .results {
+    animation: fadeUp 0.4s ease 0.1s both;
+  }
+
+  .results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .results-title {
+    font-family: 'Gmarket Sans', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .results-count {
+    font-size: 13px;
+    color: var(--text-muted);
+    background: var(--surface2);
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+
+  /* Search */
+  .search-bar {
+    position: relative;
+    margin-bottom: 16px;
+  }
+  .search-bar input {
+    width: 100%;
+    padding: 12px 16px 12px 40px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'Noto Sans KR', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-bar input:focus { border-color: var(--accent); }
+  .search-bar::before {
+    content: '🔍';
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    pointer-events: none;
+  }
+
+  /* Account list */
+  .account-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .account-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+    animation: fadeUp 0.3s ease both;
+  }
+  .account-item:hover {
+    border-color: rgba(255,56,92,0.3);
+    background: var(--surface2);
+    transform: translateX(4px);
+  }
+
+  .account-avatar {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--border), var(--surface2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    border: 1.5px solid var(--border);
+    overflow: hidden;
+  }
+  .account-avatar img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+
+  .account-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .account-username {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .account-since {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .account-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .btn-visit {
+    padding: 7px 14px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+  }
+  .btn-visit:hover {
+    border-color: var(--text-muted);
+    color: var(--text);
+  }
+
+  .btn-unfollow {
+    padding: 7px 14px;
+    background: rgba(255,56,92,0.1);
+    border: 1px solid rgba(255,56,92,0.3);
+    border-radius: 8px;
+    color: var(--accent);
+    font-size: 12px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .btn-unfollow:hover {
+    background: rgba(255,56,92,0.2);
+    border-color: var(--accent);
+  }
+
+  /* Empty */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+    animation: fadeUp 0.4s ease;
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty h3 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
+  .empty p { font-size: 14px; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 24px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 100;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="logo">Instagram Tracker</div>
+    <h1>언팔 감지기</h1>
+    <p class="subtitle">나는 팔로잉 중인데 나를 언팔한 계정을 찾아드려요<br>인스타그램 데이터 파일을 업로드하세요</p>
+  </div>
+
+  <!-- Guide -->
+  <div class="guide">
+    <div class="guide-title">📦 데이터 파일 받는 법</div>
+    <ol class="guide-steps">
+      <li>인스타그램 앱 → <b>설정 및 활동</b> 메뉴 진입</li>
+      <li><b>계정 센터</b> → <b>내 정보 및 권한</b> → <b>내 정보 내보내기</b></li>
+      <li><b>내보내기 만들기</b> → <b>기기로 내보내기</b> 선택</li>
+      <li><b>정보 맞춤 설정</b> → <b>연결 활동: 팔로워 및 팔로잉</b> 저장</li>
+      <li>형식: <b>JSON</b> 으로 설정 후 요청 → 다운로드</li>
+      <li>다운로드 받은 <b>zip 파일 그대로</b> 업로드</li>
+    </ol>
+    <p style="margin-top:14px; font-size:13px; color:#ff385c; font-weight:500;">⚠️ 언팔하기 전에 꼭 해당 계정의 팔로우에서 내 계정이 없는지 확인 후 언팔하세요</p>
+  </div>
+
+  <!-- Upload -->
+  <div class="upload-section">
+    <div class="upload-box" id="box-folder" style="margin-bottom:12px; padding:44px 20px; cursor:pointer;" onclick="document.getElementById('file-zip').click()">
+      <span class="upload-icon" id="folder-icon">📂</span>
+      <span class="upload-label" id="folder-label">파일을 선택하세요</span>
+      <span class="upload-hint">zip 파일 · 폴더 클릭 또는 여기에 끌어다 놓기</span>
+      <div class="upload-filename" id="folder-status"></div>
+    </div>
+    <input type="file" id="file-zip" accept=".zip" onchange="loadZip(this)">
+    <input type="file" id="file-folder" webkitdirectory multiple onchange="loadFolder(this)">
+    <button class="analyze-btn" id="analyze-btn" onclick="analyze()" disabled>분석하기</button>
+  </div>
+
+  <!-- Results area -->
+  <div id="results-area" class="hidden">
+    <!-- Stats -->
+    <div class="stats" id="stats"></div>
+
+    <!-- Account list -->
+    <div class="results">
+      <div class="results-header">
+        <span class="results-title">🚨 언팔 계정 목록</span>
+        <span class="results-count" id="list-count"></span>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="search-input" placeholder="계정명 검색..." oninput="filterList()">
+      </div>
+      <div class="account-list" id="account-list"></div>
+    </div>
+  </div>
+
+  <div class="empty hidden" id="empty-state">
+    <div class="empty-icon">🎉</div>
+    <h3>언팔한 계정이 없어요!</h3>
+    <p>팔로잉 중인 모든 계정이 나를 팔로우하고 있어요</p>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+  const data = { following: null, followers: null };
+  let unfollowers = [];
+  let filtered = [];
+
+  // Drag & Drop
+  const dropBox = document.getElementById('box-folder');
+  dropBox.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropBox.style.borderColor = 'var(--accent)';
+    dropBox.style.background = 'rgba(255,56,92,0.06)';
+  });
+  dropBox.addEventListener('dragleave', () => {
+    dropBox.style.borderColor = '';
+    dropBox.style.background = '';
+  });
+  dropBox.addEventListener('drop', async e => {
+    e.preventDefault();
+    dropBox.style.borderColor = '';
+    dropBox.style.background = '';
+    const items = Array.from(e.dataTransfer.items || []);
+    const files = Array.from(e.dataTransfer.files || []);
+
+    // zip 파일
+    if (files.length === 1 && files[0].name.endsWith('.zip')) {
+      loadZip({ files: [files[0]] });
+      return;
+    }
+
+    // 폴더 드롭 (FileSystemEntry API)
+    if (items.length > 0 && items[0].webkitGetAsEntry) {
+      const allFiles = [];
+      const readEntry = (entry) => new Promise(resolve => {
+        if (entry.isFile) {
+          entry.file(f => { allFiles.push(f); resolve(); });
+        } else if (entry.isDirectory) {
+          const reader = entry.createReader();
+          reader.readEntries(async entries => {
+            await Promise.all(entries.map(readEntry));
+            resolve();
+          });
+        } else resolve();
+      });
+      await Promise.all(items.map(item => {
+        const entry = item.webkitGetAsEntry();
+        return entry ? readEntry(entry) : Promise.resolve();
+      }));
+      loadFolder({ files: allFiles });
+      return;
+    }
+
+    if (files.length >= 1) loadFolder({ files });
+  });
+
+  function setLoaded(source) {
+    const box = document.getElementById('box-folder');
+    box.classList.add('done');
+    document.getElementById('folder-icon').textContent = '✅';
+    document.getElementById('folder-label').textContent = '로드 완료';
+    document.getElementById('folder-status').textContent = source;
+    document.getElementById('analyze-btn').disabled = false;
+    analyze();
+  }
+
+  function setError(msg) {
+    document.getElementById('folder-status').textContent = msg;
+    document.getElementById('folder-status').style.color = 'var(--accent)';
+    showToast('❌ ' + msg);
+  }
+
+  async function loadZip(input) {
+    const file = input.files[0];
+    if (!file) return;
+    try {
+      const zip = await JSZip.loadAsync(file);
+      const names = Object.keys(zip.files);
+
+      const followingEntry = names.find(n => n.endsWith('following.json') && !n.includes('hashtag'));
+      const followersEntry = names.find(n => /followers_\d+\.json$/.test(n) || n.endsWith('followers_1.json'));
+
+      if (!followingEntry || !followersEntry) {
+        const missing = [];
+        if (!followingEntry) missing.push('following.json');
+        if (!followersEntry) missing.push('followers_1.json');
+        setError(`파일을 찾을 수 없어요: ${missing.join(', ')}`);
+        return;
+      }
+
+      const [fwText, frText] = await Promise.all([
+        zip.files[followingEntry].async('string'),
+        zip.files[followersEntry].async('string'),
+      ]);
+
+      data.following = JSON.parse(fwText);
+      data.followers = JSON.parse(frText);
+      setLoaded(`${file.name} (zip 파일)`);
+    } catch(e) {
+      setError('zip 파일을 읽을 수 없어요: ' + e.message);
+    }
+  }
+
+  function loadFolder(input) {
+    const files = Array.from(input.files);
+    const followingFile = files.find(f => f.name === 'following.json');
+    const followersFile = files.find(f => f.name.startsWith('followers_') && f.name.endsWith('.json'));
+
+    if (!followingFile || !followersFile) {
+      const missing = [];
+      if (!followingFile) missing.push('following.json');
+      if (!followersFile) missing.push('followers_1.json');
+      setError(`파일을 찾을 수 없어요: ${missing.join(', ')}`);
+      return;
+    }
+
+    let loaded = 0;
+    const readJSON = (file, key) => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          data[key] = JSON.parse(e.target.result);
+          loaded++;
+          if (loaded === 2) setLoaded(`폴더 (following.json + ${followersFile.name})`);
+        } catch {
+          setError(`${file.name} 파싱 오류`);
+        }
+      };
+      reader.readAsText(file);
+    };
+
+    readJSON(followingFile, 'following');
+    readJSON(followersFile, 'followers');
+  }
+
+  function analyze() {
+    // Parse following
+    const followingMap = {};
+    const followingList = data.following?.relationships_following || [];
+    for (const item of followingList) {
+      const username = item?.title;
+      if (username) {
+        const ts = item?.string_list_data?.[0]?.timestamp || 0;
+        followingMap[username] = ts;
+      }
+    }
+
+    // Parse followers
+    const followersSet = new Set();
+    const followersList = Array.isArray(data.followers) ? data.followers : [];
+    for (const item of followersList) {
+      for (const sv of item?.string_list_data || []) {
+        if (sv?.value) followersSet.add(sv.value);
+      }
+    }
+
+    // Find unfollowers
+    unfollowers = Object.entries(followingMap)
+      .filter(([u]) => !followersSet.has(u))
+      .map(([username, ts]) => ({ username, ts }))
+      .sort((a, b) => b.ts - a.ts);
+
+    // Stats
+    const totalFollowing = Object.keys(followingMap).length;
+    const totalFollowers = followersSet.size;
+
+    document.getElementById('stats').innerHTML = `
+      <div class="stat-card">
+        <div class="stat-num">${totalFollowing.toLocaleString()}</div>
+        <div class="stat-label">내가 팔로잉</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">${totalFollowers.toLocaleString()}</div>
+        <div class="stat-label">나를 팔로우</div>
+      </div>
+      <div class="stat-card highlight">
+        <div class="stat-num">${unfollowers.length}</div>
+        <div class="stat-label">언팔 계정</div>
+      </div>
+    `;
+
+    document.getElementById('results-area').classList.remove('hidden');
+    document.getElementById('empty-state').classList.add('hidden');
+
+    if (unfollowers.length === 0) {
+      document.getElementById('results-area').classList.add('hidden');
+      document.getElementById('empty-state').classList.remove('hidden');
+      return;
+    }
+
+    filtered = [...unfollowers];
+    renderList();
+    document.getElementById('analyze-btn').textContent = '다시 분석';
+  }
+
+  function filterList() {
+    const q = document.getElementById('search-input').value.toLowerCase();
+    filtered = unfollowers.filter(u => u.username.toLowerCase().includes(q));
+    renderList();
+  }
+
+  function renderList() {
+    document.getElementById('list-count').textContent = `${filtered.length}명`;
+    const list = document.getElementById('account-list');
+
+    if (filtered.length === 0) {
+      list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted);font-size:14px;">검색 결과가 없어요</div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map((u, i) => {
+      const dateStr = u.ts ? new Date(u.ts * 1000).toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric' }) : '-';
+      const initial = u.username[0]?.toUpperCase() || '?';
+      const delay = Math.min(i * 30, 300);
+      const isDeleted = u.username.includes('__deleted__');
+
+      return `
+        <div class="account-item" style="animation-delay:${delay}ms">
+          <div class="account-avatar">${isDeleted ? '🗑️' : initial}</div>
+          <div class="account-info">
+            <div class="account-username">@${u.username}${isDeleted ? ' (삭제된 계정)' : ''}</div>
+            <div class="account-since">팔로우 시작: ${dateStr}</div>
+          </div>
+          <div class="account-actions">
+            ${!isDeleted ? `<button class="btn-unfollow" onclick="goUnfollow('${u.username}')">언팔하러 가기</button>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function goUnfollow(username) {
+    window.open(`https://www.instagram.com/${username}`, '_blank');
+    showToast(`@${username} 페이지로 이동했어요 — 직접 언팔해주세요 👆`);
+  }
+
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+</script>
+</body>
+</html>
