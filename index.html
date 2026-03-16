@@ -645,7 +645,7 @@
 
   function loadFolder(input) {
     const files = Array.from(input.files);
-    const followingFile = files.find(f => f.name === 'following.json');
+    const followingFile = files.find(f => f.name.includes('following') && f.name.endsWith('.json') && !f.name.includes('hashtag'));
     const followersFile = files.find(f => f.name.includes('followers') && f.name.endsWith('.json') && !f.name.includes('hashtag'));
 
     if (!followingFile || !followersFile) {
