@@ -619,8 +619,8 @@
       const zip = await JSZip.loadAsync(file);
       const names = Object.keys(zip.files);
 
-      const followingEntry = names.find(n => n.endsWith('following.json') && !n.includes('hashtag'));
-      const followersEntry = names.find(n => /followers_\d+\.json$/.test(n) || n.endsWith('followers_1.json'));
+      const followingEntry = names.find(n => n.includes('following') && n.endsWith('.json') && !n.includes('hashtag'));
+      const followersEntry = names.find(n => n.includes('followers') && n.endsWith('.json') && !n.includes('hashtag'));
 
       if (!followingEntry || !followersEntry) {
         const missing = [];
@@ -646,7 +646,7 @@
   function loadFolder(input) {
     const files = Array.from(input.files);
     const followingFile = files.find(f => f.name === 'following.json');
-    const followersFile = files.find(f => f.name.startsWith('followers_') && f.name.endsWith('.json'));
+    const followersFile = files.find(f => f.name.includes('followers') && f.name.endsWith('.json') && !f.name.includes('hashtag'));
 
     if (!followingFile || !followersFile) {
       const missing = [];
